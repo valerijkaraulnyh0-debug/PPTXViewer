@@ -29,6 +29,8 @@ android.minapi = 21
 # NDK
 android.ndk = 25b
 
+# SDK
+
 # Build options
 android.archs = arm64-v8a,armeabi-v7a
 
