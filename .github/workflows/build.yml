@@ -13,18 +13,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Prepare Buildozer Environment (Download SDK/NDK)
+      - name: Download SDK and NDK
         run: |
           if [ ! -f buildozer.spec ]; then buildozer init; fi
-          timeout 10m buildozer android debug || true
+          buildozer android debug || true
 
-      - name: Accept Android SDK Licenses
+      - name: Accept Android Licenses
         run: |
-          SDK_MANAGER_PATH="\$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager"
-          if [ -f "\$SDK_MANAGER_PATH" ]; then
-            yes | "\$SDK_MANAGER_PATH" --licenses
+          SDK_PATH="\$HOME/.buildozer/android/platform/android-sdk"
+          SDK_MANAGER="\$SDK_PATH/tools/bin/sdkmanager"
+          
+          if [ -f "\$SDK_MANAGER" ]; then
+            echo "Found sdkmanager at: \$SDK_MANAGER"
+            echo "Accepting licenses..."
+            yes | "\$SDK_MANAGER" --licenses
+            echo "Licenses accepted."
           else
-            echo "ERROR: sdkmanager not found"
+            echo "ERROR: sdkmanager not found at \$SDK_MANAGER"
+            ls -la "\$SDK_PATH" || true
             exit 1
           fi
 
