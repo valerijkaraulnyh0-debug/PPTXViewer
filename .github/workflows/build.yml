@@ -13,34 +13,40 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Initialize Buildozer and Download Tools
+      - name: Setup Buildozer Environment
         run: |
           if [ ! -f buildozer.spec ]; then buildozer init; fi
-          timeout 15m buildozer android debug || true
-          
-          SDK_MANAGER_PATH="\$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager"
-          for i in {1..12}; do
-            if [ -f "\$SDK_MANAGER_PATH" ]; then
-              echo "SDK Manager found."
-              break
-            fi
-            echo "Waiting for SDK Manager to be extracted... (\$i/12)"
-            sleep 10
-          done
+          buildozer android debug || true
 
       - name: Accept Android Licenses
         run: |
-          SDK_PATH="\$HOME/.buildozer/android/platform/android-sdk"
-          SDK_MANAGER="\$SDK_PATH/tools/bin/sdkmanager"
-          
-          if [ -f "\$SDK_MANAGER" ]; then
-            echo "Found sdkmanager at: \$SDK_MANAGER"
-            echo "Accepting licenses..."
-            yes | "\$SDK_MANAGER" --licenses
-            echo "Licenses accepted."
+          SDK_ROOT="\$HOME/.buildozer/android/platform/android-sdk"
+          SDK_MANAGER="\$SDK_ROOT/tools/bin/sdkmanager"
+
+          if [ ! -d "\$SDK_ROOT" ]; then
+            echo "ERROR: Android SDK directory not found."
+            ls -la "\$HOME/.buildozer/android/platform/" 2>/dev/null || true
+            exit 1
+          fi
+
+          if [ ! -f "\$SDK_MANAGER" ]; then
+            if [ -d "\$SDK_ROOT/cmdline-tools/latest/bin" ]; then
+              SDK_MANAGER="\$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+              echo "Using new SDK structure: \$SDK_MANAGER"
+            else
+              echo "ERROR: sdkmanager not found."
+              ls -la "\$SDK_ROOT" 2>/dev/null || true
+              exit 1
+            fi
+          fi
+
+          echo "Accepting licenses..."
+          yes | "\$SDK_MANAGER" --licenses
+
+          if [ \$? -eq 0 ]; then
+            echo "All licenses accepted successfully."
           else
-            echo "ERROR: sdkmanager still not found!"
-            ls -la "\$SDK_PATH" 2>/dev/null || echo "SDK directory does not exist"
+            echo "Failed to accept licenses."
             exit 1
           fi
 
@@ -52,3 +58,4 @@ jobs:
         with:
           name: apk-file
           path: bin/*.apk
+
