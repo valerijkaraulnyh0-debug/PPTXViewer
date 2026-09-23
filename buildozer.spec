@@ -30,10 +30,9 @@ android.minapi = 21
 android.ndk = 25b
 
 # SDK
-android.sdk = 24
 
 # Build options
-android.arch = arm64-v8a,armeabi-v7a
+android.archs = arm64-v8a,armeabi-v7a
 
 # Log level
 log_level = 2
